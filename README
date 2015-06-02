@@ -11,8 +11,8 @@ uri_source / uri_dest - URI: user[:password@host:port]
     if host omitted - 'localhost' used
     if port omitted - default IMAP4 port (143) used
 
-Example:
-========
+Example I - Copy the complete mailbox:
+======================================
 python imapcp.py --ssl "laura@somemailprovider.com@imap.sourceserver.com:993"  "antonia@somemailprovider.com@imap.targetserver.com:993" 
 # As you didn't gave your password here you'll be asked for. Here you can check if the username is parsed correctly.
 password for laura@somemailprovider.com: *********
@@ -25,3 +25,15 @@ password for antonia@somemailprovider.com: ******
 0 messages copied from Queue
 2 messages copied from INBOX.Company
 2 messages copied from Drafts
+
+Example II - Copy only a specific subfolder:
+============================================
+For example you have the following folder structure and you want only copy the subfolder 'INBOX.Family'.
+├── .INBOX.Family
+├── new
+└── .Trash
+python imapcp.py --ssl --box INBOX.Family "laura@somemailprovider.com@imap.sourceserver.com:993"  "antonia@somemailprovider.com@imap.targetserver.com:993" 
+
+
+
+
