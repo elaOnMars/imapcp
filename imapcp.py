@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+'''
 #-*- coding: utf8 -*-
-
+'''
 __program__ = "IMAP4 mailbox copy tool"
 __author__ = "s0rg"
 __version__ = "0.7"
@@ -64,7 +65,7 @@ def parse_list_response(line):
 
 
 class ImapBox(object):
-    def __init__(self, login, password, host, port, ssl=False):
+    def __init__(self, login, password, host, port, ssl=True):
         self._mailboxes = {}
         self._login = login
         self._password = password
@@ -81,9 +82,54 @@ class ImapBox(object):
         self._conn.login(self._login, self._password)
 
         typ, res = self._conn.list()
+        
+#
+#######  START  -  CHANGES MADE I
+        print "typ: ", typ
+        print "res: "
+        print res
+        print "\n"
+        print "self._conn.list():", self._conn.list()
+        print "===================\n\n"
         if typ != 'OK':
+            print "typ nicht OK!" 
             raise Exception('IMAP "list" command failed!')
+	for ln in res:
+	    print "ln 3: " + ln
+            flags, delimiter, mailbox_name = parse_list_response(ln)
+            print "flags... " + flags + " | " + delimiter + " | " + mailbox_name
+            
+            '''
+            # imaplib has a bug: https://bugs.python.org/issue13446
+            # Charalampos Nikolaou says:
+            
+            And this is that imaplib does not include a function for the "EXAMINE" command. What it does is that when a 
+            user selects a mailbox as readonly, it executes an EXAMINE command instead of a SELECT command, which is 
+            wrong according to RFC2060 (http://james.apache.org/server/rfclist/imap4/rfc2060.txt) that explicitly 
+            states the following:
+	    "Read-only access through SELECT differs from the EXAMINE command in that certain read-only mailboxes MAY 
+	    permit the change of permanent state on a per-user (as opposed to global) basis.  Netnews messages marked in 
+	    a server-based .newsrc file are an example of such per-user permanent state that can be modified with 
+	    read-only mailboxes."
+	    A quick patch for imaplib is to have it not raising any exceptions when checking the READ-ONLY state. 
+	    In this way, one can open a read-only mailbox using the SELECT command as follows:
+	    
+	    imap.select(mailbox)
+	    
+	    
+	    Preventing imaplib from raising exceptions when using the above command with read-only mailboxes, it allows
+	    someone to fetch a message and then marked it as seen. After all, the exceptions are of no use, because the 
+	    IMAP server is responsible for making security checks and not the client.
 
+            typ, [data] = self._conn.select('INBOX')
+            print "OOOOOO", typ, data
+            num_msgs = int(data[0])
+            print 'There are %d messages in INBOX' % num_msgs
+            
+            print self._conn.status(mailbox_name, '(MESSAGES RECENT UIDNEXT UIDVALIDITY UNSEEN)')
+    '''
+#######  STOP  -  CHANGES MADE I   
+#       
         for ln in res:
             flags, delimiter, mailbox_name = parse_list_response(ln)
             self._conn.select(mailbox_name, readonly=True)
@@ -95,6 +141,8 @@ class ImapBox(object):
 
     def get_boxes(self):
         return self._mailboxes.keys()
+        print "self._mailboxes.keys()"
+        print self._mailboxes.keys()
 
     def get_message(self, mailbox, msg_id=None):
         if msg_id is None:
@@ -200,3 +248,4 @@ def main(args):
 ##### entry point ######
 sys.exit(main(sys.argv))
 ########################
+
