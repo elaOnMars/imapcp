@@ -35,5 +35,7 @@ For example you have the following folder structure and you want only copy the s
 python imapcp.py --ssl --box INBOX.Family "laura@somemailprovider.com@imap.sourceserver.com:993"  "antonia@somemailprovider.com@imap.targetserver.com:993" 
 
 
+ERROR HANDLING: Please choose the other branch if you get an error exception to know where you can bug fix your Python libraries.
+
 
 
