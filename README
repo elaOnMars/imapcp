@@ -35,5 +35,40 @@ For example you have the following folder structure and you want only copy the s
 python imapcp.py --ssl --box INBOX.Family "laura@somemailprovider.com@imap.sourceserver.com:993"  "antonia@somemailprovider.com@imap.targetserver.com:993" 
 
 
+BUG FIX:
+========
+If you get an exception like:
+
+...
+  File "/usr/local/lib/python2.7/imaplib.py", line 1633, in _simple_command
+    return self._command_complete(self._command(name, *args), kw)
+  File "/usr/local/lib/python2.7/imaplib.py", line 1306, in _command
+    % (name, self.state))
+imaplib.error: command SEARCH illegal in state AUTH
+
+
+...then you may change your imapblib.py in the Python module imaplib.py (with super admin rights)
+to prevent throwing out this exception. Make a backup of your imaplib.py.
+
+1. cp /usr/local/lib/python2.7/imaplib.py /usr/local/lib/python2.7/imaplib.py~
+2. nano /usr/local/lib/python2.7/imaplib.py
+3. 'Strg' + 'W'
+    Search: illegal in state
+4. Uncomment the following lines:
+    if self.state not in Commands[name][CMD_VAL_STATES]:
+        self.literal = None
+        raise self.error('command %s illegal in state %s'
+                                    % (name, self.state))
+
+    #if self.state not in Commands[name][CMD_VAL_STATES]:
+    #    self.literal = None
+    #    raise self.error('command %s illegal in state %s'
+    #                        % (name, self.state))
+5. Save with 'Strg' + 'O' and quit with 'Strg' + 'X'
+6. Start your script again.
+
+
+
+
 
 
