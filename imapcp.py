@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+'''
 #-*- coding: utf8 -*-
+'''
+
+
 
 __program__ = "IMAP4 mailbox copy tool"
 __author__ = "s0rg"
@@ -64,7 +68,7 @@ def parse_list_response(line):
 
 
 class ImapBox(object):
-    def __init__(self, login, password, host, port, ssl=False):
+    def __init__(self, login, password, host, port, ssl=True):
         self._mailboxes = {}
         self._login = login
         self._password = password
@@ -81,20 +85,57 @@ class ImapBox(object):
         self._conn.login(self._login, self._password)
 
         typ, res = self._conn.list()
-        if typ != 'OK':
-            raise Exception('IMAP "list" command failed!')
+        
 
+        self._conn.select(readonly=True)
+	
+        # search only for mails which have the flag SEEN and save in seen
+        print '\n=========='
+        #typ2, msg_data = self._conn.fetch('1', '(FLAGS)')
         for ln in res:
-            flags, delimiter, mailbox_name = parse_list_response(ln)
-            self._conn.select(mailbox_name, readonly=True)
-            typ, [msg_ids] = self._conn.search(None, 'ALL')
-            if typ == 'OK':
-                self._mailboxes[mailbox_name] = msg_ids.split()
+           flags, delimiter, mailbox_name = parse_list_response(ln)    
+           print "mboxname: ", mailbox_name, "."              
+           self._conn.select(mailbox_name, readonly=True)  
+           typ, [msg_ids] = self._conn.search(None, 'ALL') 
+           typ, data = self._conn.search(None, 'ALL') 
+           print 'Parsed...' + flags + " | " + delimiter + " | " + mailbox_name
+           if typ == 'OK':
+                   # Loop each time trough the first list element res[0]
+           	   for num in data[0].split():
+                           typ2, data = self._conn.fetch(1, 'RFC822')   # Print every time the first email
+                           print 'XXXX - Message %s\n%s\n' % (num, data[0][1])
+           
+           
+                           self._mailboxes[mailbox_name] = msg_ids.split()
+                    	   '''
+                           for flag in msg_data:
+                              print "Flags in ", mailbox_name, " (IDs ", [msg_ids], "):", flag
+                              # Read mails
+                              if '(FLAGS (\Seen))' in flag:
+                                print "Read Mails with SEEN flag:"
+                                print mailbox_name, msg_data, ". Parsed flag: ",imaplib.ParseFlags(flag)
+            		    	print "\n----------------"
+            		      # Read and flagged mails
+            		    
+            		      # Unread mails
+            		      elif '(FLAGS ())' in flag:
+                                print "Unread Mails with no flag:"
+                                print mailbox_name, msg_data, ". Parsed flag: ",imaplib.ParseFlags(flag)
+            		    	print "\n----------------"
+            		      # Unread and flagged mails
+            		      elif '(FLAGS (\Flagged \Seen))' in flag:
+                                print "Unread Mails with flag:"
+                                print mailbox_name, msg_data, ". Parsed flag: ",imaplib.ParseFlags(flag)
+            		    	print "\n----------------"
+                           '''
+
 
         return self
 
     def get_boxes(self):
         return self._mailboxes.keys()
+        print "self._mailboxes.keys()"
+        print self._mailboxes.keys()
 
     def get_message(self, mailbox, msg_id=None):
         if msg_id is None:
@@ -200,3 +241,5 @@ def main(args):
 ##### entry point ######
 sys.exit(main(sys.argv))
 ########################
+
+
